@@ -30,11 +30,22 @@
 --enable-protocol=file,http,https,tcp,tls,pipe
 --enable-schannel
 --disable-openssl
+--enable-w32threads
+--disable-pthreads
+--enable-libxml2
 ```
 
 ### HTTPS / TLS
 
-Windows 上 **SChannel 与 OpenSSL/GnuTLS 互斥**（FFmpeg `configure` 中 `schannel_conflict`）。本构建只用 `--enable-schannel`（系统证书库、无额外 TLS DLL），并显式 `--disable-openssl` 等，避免 MSYS2 自动探测到 OpenSSL 后冲突。
+Windows 上 **SChannel 与 OpenSSL/GnuTLS 互斥**（`schannel_conflict`）。只用 `--enable-schannel`，并显式 `--disable-openssl` 等。
+
+### 线程模型
+
+Windows/MinGW 应使用 **`--enable-w32threads --disable-pthreads`**。`--enable-pthreads` 会跳过 Win32 线程探测并强制链接 pthread，在 MSYS2 MINGW64 上常导致 `pthreads requested but not found`（见 FFmpeg `configure` 约 7225–7257 行）。
+
+### DASH
+
+`dash` demuxer 依赖 **libxml2**（`dash_demuxer_deps="libxml2"`），需 `--enable-libxml2` 并安装 `mingw-w64-x86_64-libxml2`。
 
 ### 为何只用 QSV
 
@@ -47,7 +58,8 @@ Windows 上 **SChannel 与 OpenSSL/GnuTLS 互斥**（FFmpeg `configure` 中 `sch
 
 ```bash
 pacman -S --needed mingw-w64-x86_64-toolchain mingw-w64-x86_64-nasm \
-  mingw-w64-x86_64-pkg-config mingw-w64-x86_64-libvpl make diffutils
+  mingw-w64-x86_64-pkg-config mingw-w64-x86_64-libvpl \
+  mingw-w64-x86_64-libxml2 make diffutils
 
 bash ./scripts/build-win.sh
 ```

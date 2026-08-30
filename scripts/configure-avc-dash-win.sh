@@ -34,19 +34,27 @@ conf=(
   --enable-swscale
   --enable-avfilter
 
+  # Windows threading: use native Win32 threads, NOT pthreads (see FFmpeg configure ~L7225).
+  --enable-w32threads
+  --disable-pthreads
+
   # Intel Quick Sync Video (oneVPL) — Intel iGPU hardware AVC decode only.
   --enable-libvpl
+  --disable-libmfx
   --enable-decoder=h264_qsv
   --disable-decoder=h264
 
   # HTTPS streaming (Bilibili CDN).
-  # TLS: Windows 原生 SChannel only — mutually exclusive with openssl/gnutls/mbedtls.
+  # TLS: SChannel only — mutually exclusive with openssl/gnutls/mbedtls (schannel_conflict).
   --enable-protocol=file,http,https,tcp,tls,pipe
   --enable-schannel
   --disable-openssl
   --disable-gnutls
   --disable-libtls
   --disable-mbedtls
+
+  # dash demuxer requires libxml2 (dash_demuxer_deps in configure).
+  --enable-libxml2
 
   # Containers: fragmented MP4 direct URLs + optional MPD.
   --enable-demuxer=dash,mov,mp4,aac,h264
@@ -66,8 +74,6 @@ conf=(
   --enable-ffmpeg
   --enable-ffprobe
   --disable-ffplay
-
-  --enable-pthreads
 )
 
 if [[ -n "$extra_cflags" ]]; then
@@ -82,3 +88,6 @@ echo "Source : $root_dir"
 echo "Build  : $build_dir"
 echo "Prefix : $prefix"
 "$root_dir/configure" "${conf[@]}"
+
+echo "=== Configure summary (threads / TLS / QSV) ==="
+grep -E '^(HAVE_W32THREADS|HAVE_PTHREADS|CONFIG_SCHANNEL|CONFIG_LIBVPL|CONFIG_H264_QSV_DECODER)=' ffbuild/config.sh 2>/dev/null || true

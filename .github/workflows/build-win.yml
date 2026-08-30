@@ -48,6 +48,7 @@ jobs:
             mingw-w64-x86_64-nasm
             mingw-w64-x86_64-pkg-config
             mingw-w64-x86_64-libvpl
+            mingw-w64-x86_64-libxml2
             make
             diffutils
             git
@@ -58,9 +59,13 @@ jobs:
       - name: Smoke test
         run: |
           ./dist/ffmpeg-win-x64/bin/ffmpeg.exe -hide_banner -version
-          ./dist/ffmpeg-win-x64/bin/ffmpeg.exe -hide_banner -decoders | grep -E 'h264_qsv'
-          ! ./dist/ffmpeg-win-x64/bin/ffmpeg.exe -hide_banner -decoders | grep -E '^ V.*\bh264\b'
+          ./dist/ffmpeg-win-x64/bin/ffmpeg.exe -hide_banner -decoders | grep h264_qsv
+          if ./dist/ffmpeg-win-x64/bin/ffmpeg.exe -hide_banner -decoders | grep -E '^ V.*\bh264\b'; then
+            echo "ERROR: software h264 decoder must be disabled"
+            exit 1
+          fi
           ./dist/ffmpeg-win-x64/bin/ffmpeg.exe -hide_banner -demuxers | grep -E ' dash| mov'
+          ./dist/ffmpeg-win-x64/bin/ffmpeg.exe -hide_banner -buildconf | grep -E 'w32threads|schannel|libvpl'
 
       - name: Upload artifact
         uses: actions/upload-artifact@v4

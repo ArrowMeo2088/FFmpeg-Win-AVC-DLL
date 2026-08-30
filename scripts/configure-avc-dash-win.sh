@@ -88,6 +88,3 @@ echo "Source : $root_dir"
 echo "Build  : $build_dir"
 echo "Prefix : $prefix"
 "$root_dir/configure" "${conf[@]}"
-
-echo "=== Configure summary (threads / TLS / QSV) ==="
-grep -E '^(HAVE_W32THREADS|HAVE_PTHREADS|CONFIG_SCHANNEL|CONFIG_LIBVPL|CONFIG_H264_QSV_DECODER)=' ffbuild/config.sh 2>/dev/null || true

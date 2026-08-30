@@ -71,7 +71,17 @@ bash ./scripts/build-win.sh
 
 ## GitHub Actions
 
-推送至 `master` / `main` 后自动构建并上传 Artifact。构建脚本末尾会检查 `config.h` 中已启用 `h264_qsv`、未启用软解 `h264`，并运行 `ffmpeg -version`（不再单独做复杂 smoke 步骤）。
+推送至 `master` / `main` 后自动 **configure → 编译 → 打包 → 上传 Artifact**，不做运行时校验（避免浪费 CI 时间；本地下载后再测）。
+
+手动触发：`Actions → Build Windows x64 (AVC + DASH) → Run workflow`
+
+## 本地自测（可选）
+
+```bash
+export PATH="/mingw64/bin:$PATH"
+./dist/ffmpeg-win-x64/bin/ffmpeg.exe -version
+./dist/ffmpeg-win-x64/bin/ffmpeg.exe -decoders | grep h264_qsv
+```
 
 ## 与 mpv 配合
 

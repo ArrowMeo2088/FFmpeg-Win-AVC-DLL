@@ -47,7 +47,6 @@ jobs:
             mingw-w64-x86_64-toolchain
             mingw-w64-x86_64-nasm
             mingw-w64-x86_64-pkg-config
-            mingw-w64-x86_64-openssl
             mingw-w64-x86_64-libvpl
             make
             diffutils

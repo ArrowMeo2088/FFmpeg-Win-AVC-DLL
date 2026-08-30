@@ -27,7 +27,7 @@ for pattern in \
   cp -f "$pattern" "$flat_dir/"
 done
 
-# Copy MinGW / OpenSSL runtime dependencies when dynamically linked.
+# Copy MinGW / libvpl runtime dependencies when dynamically linked.
 if command -v ldd >/dev/null 2>&1; then
   mapfile -t deps < <(ldd "$flat_dir"/avcodec-*.dll 2>/dev/null | awk '/=>/ {print $3}' | sort -u)
   for dep in "${deps[@]}"; do

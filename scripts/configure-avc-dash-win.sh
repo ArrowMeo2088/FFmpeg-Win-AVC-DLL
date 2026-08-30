@@ -40,9 +40,13 @@ conf=(
   --disable-decoder=h264
 
   # HTTPS streaming (Bilibili CDN).
-  --enable-protocol=file,http,https,tcp,tls,pipe,crypto
+  # TLS: Windows 原生 SChannel only — mutually exclusive with openssl/gnutls/mbedtls.
+  --enable-protocol=file,http,https,tcp,tls,pipe
   --enable-schannel
-  --enable-openssl
+  --disable-openssl
+  --disable-gnutls
+  --disable-libtls
+  --disable-mbedtls
 
   # Containers: fragmented MP4 direct URLs + optional MPD.
   --enable-demuxer=dash,mov,mp4,aac,h264

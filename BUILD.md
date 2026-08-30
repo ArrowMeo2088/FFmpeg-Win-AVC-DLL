@@ -27,7 +27,14 @@
 --enable-demuxer=dash,mov,mp4,aac,h264
 --enable-parser=h264,hevc,aac,mpegaudio
 --enable-bsf=h264_mp4toannexb,aac_adtstoasc,extract_extradata
+--enable-protocol=file,http,https,tcp,tls,pipe
+--enable-schannel
+--disable-openssl
 ```
+
+### HTTPS / TLS
+
+Windows 上 **SChannel 与 OpenSSL/GnuTLS 互斥**（FFmpeg `configure` 中 `schannel_conflict`）。本构建只用 `--enable-schannel`（系统证书库、无额外 TLS DLL），并显式 `--disable-openssl` 等，避免 MSYS2 自动探测到 OpenSSL 后冲突。
 
 ### 为何只用 QSV
 
@@ -40,8 +47,7 @@
 
 ```bash
 pacman -S --needed mingw-w64-x86_64-toolchain mingw-w64-x86_64-nasm \
-  mingw-w64-x86_64-pkg-config mingw-w64-x86_64-openssl \
-  mingw-w64-x86_64-libvpl make diffutils
+  mingw-w64-x86_64-pkg-config mingw-w64-x86_64-libvpl make diffutils
 
 bash ./scripts/build-win.sh
 ```

@@ -1,5 +1,6 @@
 #!/usr/bin/env bash
 # Collect runtime DLLs (FFmpeg + MinGW deps) into dist/bin for mpv / app bundling.
+# Never copy Windows system DLLs from ldd — that breaks loader search order.
 set -euo pipefail
 
 root_dir="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
@@ -13,6 +14,7 @@ if [[ ! -d "$bin_dir" ]]; then
 fi
 
 flat_dir="$dist_dir/bin"
+rm -rf "$flat_dir"
 mkdir -p "$flat_dir"
 
 copy_into_flat() {
@@ -38,34 +40,20 @@ for pattern in \
   copy_into_flat "$pattern"
 done
 
-# Known third-party runtime DLLs (not installed into our prefix by make install).
+# MinGW / third-party runtime only (paths under $MINGW_PREFIX/bin).
 for pattern in \
   "$mingw_bin"/libvpl*.dll \
   "$mingw_bin"/libxml2*.dll \
   "$mingw_bin"/libwinpthread*.dll \
   "$mingw_bin"/libgcc_s*.dll \
-  "$mingw_bin"/libstdc++*.dll; do
+  "$mingw_bin"/libstdc++*.dll \
+  "$mingw_bin"/libiconv*.dll \
+  "$mingw_bin"/zlib1.dll \
+  "$mingw_bin"/libz*.dll; do
   for f in $pattern; do
     copy_into_flat "$f"
   done
 done
-
-# Copy remaining MinGW runtime deps reported by ldd (skip FFmpeg DLLs already present).
-if command -v ldd >/dev/null 2>&1; then
-  mapfile -t deps < <(ldd "$flat_dir"/avcodec-*.dll 2>/dev/null | awk '/=>/ {print $3}' | sort -u)
-  for dep in "${deps[@]}"; do
-    [[ -z "$dep" || "$dep" == "not" || ! -f "$dep" ]] && continue
-    case "$(basename "$dep" | tr '[:upper:]' '[:lower:]')" in
-      kernel32.dll|msvcrt.dll|advapi32.dll|user32.dll|ws2_32.dll|bcrypt.dll|secur32.dll|crypt32.dll|shell32.dll|ole32.dll|oleaut32.dll)
-        continue
-        ;;
-      avcodec-*.dll|avformat-*.dll|avutil-*.dll|avfilter-*.dll|swresample-*.dll|swscale-*.dll)
-        continue
-        ;;
-    esac
-    copy_into_flat "$dep"
-  done
-fi
 
 cat >"$dist_dir/README.txt" <<EOF
 FFmpeg Win x64 — Intel QSV (h264_qsv) + DASH/fMP4 minimal build

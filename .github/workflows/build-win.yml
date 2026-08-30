@@ -58,14 +58,17 @@ jobs:
 
       - name: Smoke test
         run: |
-          ./dist/ffmpeg-win-x64/bin/ffmpeg.exe -hide_banner -version
-          ./dist/ffmpeg-win-x64/bin/ffmpeg.exe -hide_banner -decoders | grep h264_qsv
-          if ./dist/ffmpeg-win-x64/bin/ffmpeg.exe -hide_banner -decoders | grep -E '^ V.*\bh264\b'; then
+          set -euo pipefail
+          BIN="$PWD/dist/ffmpeg-win-x64/bin"
+          test -f "$BIN/ffmpeg.exe"
+          "$BIN/ffmpeg.exe" -hide_banner -version
+          "$BIN/ffmpeg.exe" -hide_banner -decoders | grep h264_qsv
+          if "$BIN/ffmpeg.exe" -hide_banner -decoders | awk '/^ V/{print $2}' | grep -qx h264; then
             echo "ERROR: software h264 decoder must be disabled"
             exit 1
           fi
-          ./dist/ffmpeg-win-x64/bin/ffmpeg.exe -hide_banner -demuxers | grep -E ' dash| mov'
-          ./dist/ffmpeg-win-x64/bin/ffmpeg.exe -hide_banner -buildconf | grep -E 'w32threads|schannel|libvpl'
+          "$BIN/ffmpeg.exe" -hide_banner -demuxers | grep -E ' (dash|mov)$'
+          "$BIN/ffmpeg.exe" -hide_banner -buildconf | grep -E 'w32threads|schannel|libvpl'
 
       - name: Upload artifact
         uses: actions/upload-artifact@v4

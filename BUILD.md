@@ -67,7 +67,7 @@ bash ./scripts/build-win.sh
 产出：
 
 - `dist/ffmpeg-win-x64/mingw64/` — 完整 prefix（含 `include/`、`lib/pkgconfig/`）
-- `dist/ffmpeg-win-x64/bin/` — 扁平运行时（DLL + `ffmpeg.exe` + `ffprobe.exe` + `libvpl` 等依赖）
+- `dist/ffmpeg-win-x64/bin/` — 扁平运行时（仅 FFmpeg DLL + MinGW 依赖，**不含** Windows 系统 DLL）
 
 ## GitHub Actions
 

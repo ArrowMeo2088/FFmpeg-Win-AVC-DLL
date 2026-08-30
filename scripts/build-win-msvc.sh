@@ -11,12 +11,27 @@ export FFMPEG_BUILD_DIR="$build_dir"
 export FFMPEG_DIST_DIR="$dist_dir"
 export FFMPEG_PREFIX="$prefix"
 
-for tool in clang-cl nasm make; do
-  if ! command -v "$tool" >/dev/null 2>&1; then
-    echo "error: required tool not in PATH: $tool"
-    exit 1
-  fi
-done
+ensure_tool() {
+  local tool="$1"
+  command -v "$tool" >/dev/null 2>&1 && return 0
+  local dir
+  for dir in \
+    /usr/bin \
+    /clang64/bin \
+    /mingw64/bin \
+    "/c/Program Files/NASM"; do
+    if [[ -x "$dir/$tool" || -x "$dir/$tool.exe" ]]; then
+      export PATH="$dir:$PATH"
+      command -v "$tool" >/dev/null 2>&1 && return 0
+    fi
+  done
+  echo "error: required tool not in PATH: $tool"
+  exit 1
+}
+
+ensure_tool clang-cl
+ensure_tool nasm
+ensure_tool make
 
 if [[ -n "${PKG_CONFIG:-}" ]]; then
   :

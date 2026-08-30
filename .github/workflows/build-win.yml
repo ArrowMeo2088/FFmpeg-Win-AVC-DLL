@@ -44,6 +44,11 @@ jobs:
             diffutils
             nasm
 
+      - name: Install NASM
+        shell: pwsh
+        run: |
+          winget install --accept-source-agreements --accept-package-agreements NASM.NASM
+
       - name: Install vcpkg dependencies
         shell: pwsh
         run: |
@@ -59,18 +64,24 @@ jobs:
           PKG_CONFIG_PATH: C:\vcpkg\installed\x64-windows\lib\pkgconfig;C:\vcpkg\installed\x64-windows-static\lib\pkgconfig
         run: |
           Set-Location $env:GITHUB_WORKSPACE
-          $env:PATH = "C:\msys64\clang64\bin;C:\msys64\usr\bin;" + (
-            ($env:PATH -split ';' | Where-Object {
-              $_ -and $_ -ne 'C:\Program Files\LLVM\bin' -and `
-              $_ -ne 'C:\Program Files\CMake\bin' -and `
-              $_ -ne 'C:\Strawberry\c\bin'
-            }) -join ';'
-          )
           $vswhere = "${env:ProgramFiles(x86)}\Microsoft Visual Studio\Installer\vswhere.exe"
           $vsPath = & $vswhere -latest -products * -requires Microsoft.VisualStudio.Component.VC.Tools.x86.x64 -property installationPath
           if (-not $vsPath) { throw "Visual Studio not found" }
           Import-Module "$vsPath\Common7\Tools\Microsoft.VisualStudio.DevShell.dll"
           Enter-VsDevShell -VsInstallPath $vsPath -SkipAutomaticLocation -DevCmdArguments '-arch=amd64 -host_arch=amd64'
+          # DevShell resets PATH; re-add MSYS2 + NASM after it.
+          $env:PATH = @(
+            'C:\msys64\clang64\bin',
+            'C:\msys64\usr\bin',
+            'C:\Program Files\NASM',
+            "$env:LOCALAPPDATA\Microsoft\WinGet\Links"
+          ) + (
+            $env:PATH -split ';' | Where-Object {
+              $_ -and $_ -ne 'C:\Program Files\LLVM\bin' -and `
+              $_ -ne 'C:\Program Files\CMake\bin' -and `
+              $_ -ne 'C:\Strawberry\c\bin'
+            }
+          ) -join ';'
           $env:MSYSTEM = 'CLANG64'
           $env:MSYS2_PATH_TYPE = 'inherit'
           & 'C:\msys64\usr\bin\bash.exe' -c "./scripts/build-win-msvc.sh"

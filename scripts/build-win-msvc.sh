@@ -7,9 +7,11 @@ dist_dir="${FFMPEG_DIST_DIR:-$root_dir/dist/ffmpeg-win-msvc-x64}"
 prefix="${FFMPEG_PREFIX:-$dist_dir/prefix}"
 jobs="${FFMPEG_JOBS:-${NUMBER_OF_PROCESSORS:-4}}"
 
+export MSYSTEM="${MSYSTEM:-CLANG64}"
 export FFMPEG_BUILD_DIR="$build_dir"
 export FFMPEG_DIST_DIR="$dist_dir"
 export FFMPEG_PREFIX="$prefix"
+export PKG_CONFIG_MSVC_SYNTAX="${PKG_CONFIG_MSVC_SYNTAX:-1}"
 
 ensure_tool() {
   local tool="$1"
@@ -63,11 +65,12 @@ export CXX="$wrapper_dir/clang-cl-v2"
 bash "$root_dir/scripts/configure-avc-dash-msvc.sh"
 
 echo "=== Build (${jobs} jobs) ==="
-make -C "$build_dir" -j"$jobs"
+cd "$build_dir"
+make -j"$jobs"
 
 echo "=== Install to dist prefix ==="
 rm -rf "$prefix"
-make -C "$build_dir" install
+make install
 
 bash "$root_dir/scripts/package-win-msvc.sh"
 

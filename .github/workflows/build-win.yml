@@ -48,6 +48,7 @@ jobs:
             mingw-w64-x86_64-nasm
             mingw-w64-x86_64-pkg-config
             mingw-w64-x86_64-openssl
+            mingw-w64-x86_64-libvpl
             make
             diffutils
             git
@@ -58,7 +59,8 @@ jobs:
       - name: Smoke test
         run: |
           ./dist/ffmpeg-win-x64/bin/ffmpeg.exe -hide_banner -version
-          ./dist/ffmpeg-win-x64/bin/ffmpeg.exe -hide_banner -decoders | grep -E '^ V.* h264'
+          ./dist/ffmpeg-win-x64/bin/ffmpeg.exe -hide_banner -decoders | grep -E 'h264_qsv'
+          ! ./dist/ffmpeg-win-x64/bin/ffmpeg.exe -hide_banner -decoders | grep -E '^ V.*\bh264\b'
           ./dist/ffmpeg-win-x64/bin/ffmpeg.exe -hide_banner -demuxers | grep -E ' dash| mov'
 
       - name: Upload artifact

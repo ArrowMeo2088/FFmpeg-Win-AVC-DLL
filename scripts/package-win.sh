@@ -44,16 +44,20 @@ if command -v ldd >/dev/null 2>&1; then
 fi
 
 cat >"$dist_dir/README.txt" <<EOF
-FFmpeg Win x64 — AVC + DASH/fMP4 minimal build
+FFmpeg Win x64 — Intel QSV (h264_qsv) + DASH/fMP4 minimal build
 Built from: $(git -C "$root_dir" rev-parse --short HEAD 2>/dev/null || echo unknown)
+
+Video: Intel iGPU hardware decode only (Quick Sync / libvpl). No H.264 software decoder.
+Audio: AAC software decode.
+Requires Intel GPU with QSV support and up-to-date graphics driver on the target PC.
 
 Layout:
   bin/          Flat runtime bundle (DLL + ffmpeg.exe + ffprobe.exe)
   mingw64/      Full prefix (include/, lib/, bin/) for linking libmpv
 
 Use with mpv:
-  Point PKG_CONFIG_PATH or meson wrap to mingw64/lib/pkgconfig
-  Or copy bin/*.dll next to libmpv-2.dll
+  PKG_CONFIG_PATH=mingw64/lib/pkgconfig; mpv --hwdec=qsv
+  Copy bin/*.dll (including libvpl) next to libmpv-2.dll
 
 Bilibili playback notes:
   - Video/audio are often separate HTTPS fMP4 URLs (mov demuxer)

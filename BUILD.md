@@ -1,25 +1,47 @@
 # FFmpeg-Win-AVC-DLL
 
-Windows x64 最小 FFmpeg 共享库：`h264_qsv`（Intel 核显）+ B 站 fMP4/DASH 流式。无 CLI（`--disable-programs`）。
+Windows x64 最小 FFmpeg：`h264_qsv`（Intel 核显）+ B 站 fMP4/DASH 流式。无 CLI（`--disable-programs`）。
+
+## 链接方式（给 mpv）
+
+| 组件 | 方式 |
+|------|------|
+| FFmpeg → libmpv | **静态** `.lib`（链进 libmpv） |
+| libvpl | **动态** `libvpl.dll`（运行时随包分发） |
+| libmpv → C# | 动态 DLL（由 MPV-Win-AVC 构建，本仓库不涉及） |
+
+CPU 基线：**x86-64-v2**（经 `clang-cl` wrapper 注入 `-march=x86-64-v2`；FFmpeg MSVC 过滤器会丢弃 `--extra-cflags` 里的 `-march`）。
 
 ## 已验证基线
 
-以 Artifact **build #8** 的 `configure` 为准（能编过、能跑）。仅在此基础上：
-
-- `--disable-programs`（去掉 ffmpeg/ffprobe）
-- `--disable-avdevice`
-- 去掉 `mp3` 解码
+以 Artifact **build #8**（MinGW 共享库）的 `configure` 功能集为准。MSVC 静态版保留相同编解码/协议开关。
 
 **不要**加 `--disable-protocol=udp,dtls`：`tls_schannel` 会链接 `ff_udp_*`，禁用 udp 会导致 `avformat` 链接失败。
 
-## 构建
+## 构建（MSVC，本地）
 
-```bash
-bash ./scripts/build-win.sh
+需：Visual Studio（含 **clang-cl**）、MSYS2 CLANG64（`make`/`nasm`）、vcpkg。
+
+```powershell
+vcpkg install libvpl:x64-windows libxml2:x64-windows-static pkgconf:x64-windows
+
+# VS DevShell 中
+$env:VCPKG_ROOT = 'C:\vcpkg'
+$env:PKG_CONFIG = "$env:VCPKG_ROOT\installed\x64-windows\tools\pkgconf\pkgconf.exe"
+$env:PKG_CONFIG_PATH = "$env:VCPKG_ROOT\installed\x64-windows\lib\pkgconfig;$env:VCPKG_ROOT\installed\x64-windows-static\lib\pkgconfig"
+$env:PATH = "C:\msys64\clang64\bin;C:\msys64\usr\bin;$env:PATH"
+bash ./scripts/build-win-msvc.sh
 ```
 
-产出：`dist/ffmpeg-win-x64/bin/`（DLL）、`dist/ffmpeg-win-x64/mingw64/`（开发用 prefix）。
+产出：
+
+- `dist/ffmpeg-win-msvc-x64/prefix/` — `include/`、`lib/*.lib`、`lib/pkgconfig/`
+- `dist/ffmpeg-win-msvc-x64/bin/libvpl.dll`
 
 ## CI
 
-推送后编译并上传 `dist/ffmpeg-win-x64/`，无 smoke/verify。
+`windows-2025` + 预装 `C:\vcpkg` + MSVC DevShell；仅编译上传 artifact，无 smoke/verify。
+
+## 旧 MinGW 共享库脚本（保留）
+
+`scripts/build-win.sh` 为早期 DLL 方案，CI 已不再使用。

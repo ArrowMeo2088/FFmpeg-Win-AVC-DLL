@@ -36,7 +36,7 @@ bash ./scripts/build-win-msvc.sh
 
 ## CI
 
-`windows-2025` + 预装 `C:\vcpkg` + MSVC DevShell；编译后上传 Actions Artifact（`dist/ffmpeg-win-msvc-x64/`），无 smoke/verify。
+`windows-2025` + `C:\vcpkg` + MSYS2 CLANG64（`ci-build.sh` 内加载 `vcvars64`）；编译后上传 Actions Artifact。
 
 ## 旧 MinGW 共享库脚本（保留）
 

@@ -24,6 +24,9 @@ env:
 jobs:
   build:
     runs-on: windows-2025
+    defaults:
+      run:
+        shell: msys2 {0}
 
     steps:
       - name: Disable autocrlf
@@ -46,6 +49,8 @@ jobs:
 
       - name: Install vcpkg dependencies
         shell: pwsh
+        env:
+          VCPKG_ROOT: C:\vcpkg
         run: |
           & "$env:VCPKG_ROOT\vcpkg.exe" install `
             libvpl:x64-windows `
@@ -53,8 +58,7 @@ jobs:
             pkgconf:x64-windows
 
       - name: Configure, build, package
-        shell: pwsh
-        run: ./scripts/ci-build.ps1
+        run: bash ./scripts/ci-build.sh
 
       - name: Upload artifact
         uses: actions/upload-artifact@v4

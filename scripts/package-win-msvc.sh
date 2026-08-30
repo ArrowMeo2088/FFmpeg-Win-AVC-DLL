@@ -6,14 +6,14 @@ root_dir="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 dist_dir="${FFMPEG_DIST_DIR:-$root_dir/dist/ffmpeg-win-msvc-x64}"
 prefix="${FFMPEG_PREFIX:-$dist_dir/prefix}"
 bin_dir="$dist_dir/bin"
-vcpkg_root="${VCPKG_ROOT:-}"
+vcpkg_root='C:/vcpkg'
 
 if [[ ! -d "$prefix/lib" ]]; then
   echo "Expected install prefix at $prefix"
   exit 1
 fi
 
-if [[ -n "$vcpkg_root" ]] && command -v cygpath >/dev/null 2>&1; then
+if [[ -n "$vcpkg_root" ]] && command -v cygpath >/dev/null 2>&1 && [[ "$vcpkg_root" =~ ^[A-Za-z]: ]]; then
   vcpkg_root="$(cygpath -u "$vcpkg_root")"
 fi
 

@@ -14,11 +14,10 @@ export FFMPEG_PREFIX="$prefix"
 export PKG_CONFIG_MSVC_SYNTAX="${PKG_CONFIG_MSVC_SYNTAX:-1}"
 
 setup_vcpkg_env() {
-  local root="${VCPKG_ROOT:-C:/vcpkg}"
-  root="${root//\\//}"
-
+  # GHA preinstalls deps under C:/vcpkg. VS DevShell/login bash may override VCPKG_ROOT.
+  local root='C:/vcpkg'
+  export VCPKG_ROOT="$root"
   export PKG_CONFIG="${root}/installed/x64-windows/tools/pkgconf/pkgconf.exe"
-  # Windows pkgconf uses ';' between entries. Do NOT use --static globally: libvpl is dynamic.
   export PKG_CONFIG_PATH="${root}/installed/x64-windows/lib/pkgconfig;${root}/installed/x64-windows-static/lib/pkgconfig"
 
   if [[ ! -f "$PKG_CONFIG" ]]; then

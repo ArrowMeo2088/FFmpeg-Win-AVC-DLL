@@ -20,5 +20,17 @@ DESTDIR="$dist_dir" make -C "$build_dir" install
 
 bash "$root_dir/scripts/package-win.sh"
 
+echo "=== Verify (configure flags + runnable binary) ==="
+grep -q '^#define CONFIG_H264_QSV_DECODER 1' "$build_dir/config.h"
+if grep -q '^#define CONFIG_H264_DECODER 1' "$build_dir/config.h"; then
+  echo "ERROR: software H.264 decoder is enabled"
+  exit 1
+fi
+
+# Installed bin relies on /mingw64/bin for libxml2/libvpl etc. during CI build.
+export PATH="${MINGW_PREFIX:-/mingw64}/bin:$PATH"
+"$dist_dir/mingw64/bin/ffmpeg.exe" -hide_banner -version
+"$dist_dir/bin/ffmpeg.exe" -hide_banner -version
+
 echo "=== Done ==="
 echo "Artifacts: $dist_dir"

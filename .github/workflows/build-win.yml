@@ -1,76 +1,64 @@
-name: Build Windows x64 (AVC + DASH)
-
-on:
-  push:
-    branches:
-      - master
-      - main
-    paths-ignore:
-      - 'doc/**'
-      - 'tests/**'
-      - '.forgejo/**'
-      - 'CREDITS'
-      - 'MAINTAINERS'
-      - 'Changelog'
-  pull_request:
-    branches:
-      - master
-      - main
-  workflow_dispatch:
-
-concurrency:
-  group: build-win-${{ github.ref }}
-  cancel-in-progress: true
-
-jobs:
-  build:
-    runs-on: windows-latest
-    defaults:
-      run:
-        shell: msys2 {0}
-
-    steps:
-      - name: Disable autocrlf
-        shell: pwsh
-        run: |
-          git config --global core.autocrlf false
-          git config --global core.eol lf
-
-      - uses: actions/checkout@v4
-
-      - name: Setup MSYS2 MINGW64
-        uses: msys2/setup-msys2@v2
-        with:
-          msystem: MINGW64
-          update: true
-          install: >-
-            mingw-w64-x86_64-toolchain
-            mingw-w64-x86_64-nasm
-            mingw-w64-x86_64-pkg-config
-            mingw-w64-x86_64-libvpl
-            mingw-w64-x86_64-libxml2
-            make
-            diffutils
-            git
-
-      - name: Configure, build, package
-        run: bash ./scripts/build-win.sh
-
-      - name: Upload artifact
-        uses: actions/upload-artifact@v4
-        with:
-          name: ffmpeg-win-x64-avc-dash-${{ github.run_number }}
-          path: dist/ffmpeg-win-x64/
-          retention-days: 30
-
-      - name: Upload flat runtime zip
-        shell: msys2 {0}
-        run: |
-          cd dist/ffmpeg-win-x64
-          zip -r "../ffmpeg-win-x64-avc-dash-bin-${{ github.run_number }}.zip" bin README.txt
-
-      - uses: actions/upload-artifact@v4
-        with:
-          name: ffmpeg-win-x64-avc-dash-bin-${{ github.run_number }}
-          path: dist/ffmpeg-win-x64-avc-dash-bin-*.zip
-          retention-days: 30
+name: Build Windows x64 (AVC + DASH)
+
+on:
+  push:
+    branches:
+      - master
+      - main
+    paths-ignore:
+      - 'doc/**'
+      - 'tests/**'
+      - '.forgejo/**'
+      - 'CREDITS'
+      - 'MAINTAINERS'
+      - 'Changelog'
+  pull_request:
+    branches:
+      - master
+      - main
+  workflow_dispatch:
+
+concurrency:
+  group: build-win-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  build:
+    runs-on: windows-latest
+    defaults:
+      run:
+        shell: msys2 {0}
+
+    steps:
+      - name: Disable autocrlf
+        shell: pwsh
+        run: |
+          git config --global core.autocrlf false
+          git config --global core.eol lf
+
+      - uses: actions/checkout@v4
+
+      - name: Setup MSYS2 MINGW64
+        uses: msys2/setup-msys2@v2
+        with:
+          msystem: MINGW64
+          update: true
+          install: >-
+            mingw-w64-x86_64-toolchain
+            mingw-w64-x86_64-nasm
+            mingw-w64-x86_64-pkg-config
+            mingw-w64-x86_64-libvpl
+            mingw-w64-x86_64-libxml2
+            make
+            diffutils
+            git
+
+      - name: Configure, build, package
+        run: bash ./scripts/build-win.sh
+
+      - name: Upload artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: ffmpeg-win-x64-avc-dash-${{ github.run_number }}
+          path: dist/ffmpeg-win-x64/
+          retention-days: 30

@@ -1,7 +1,6 @@
 #!/usr/bin/env bash
-# Minimal FFmpeg configure for Bilibili-style streaming on Windows x64 (MSYS2 MINGW64).
-# Video: Intel iGPU only via Quick Sync (h264_qsv + libvpl). No software H.264 decode.
-# Audio: AAC software decode (Bilibili audio track; no Intel iGPU path for AAC).
+# Minimal FFmpeg for Bilibili fMP4/DASH + Intel QSV (h264_qsv) on Windows x64.
+# Output: shared libs + flat bin/ for mpv / embedding. No CLI tools.
 set -euo pipefail
 
 root_dir="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
@@ -25,7 +24,6 @@ conf=(
   --enable-small
   --enable-version3
 
-  # Strip default feature set, then enable only what we need.
   --disable-everything
   --enable-avcodec
   --enable-avformat
@@ -33,47 +31,42 @@ conf=(
   --enable-swresample
   --enable-swscale
   --enable-avfilter
+  --disable-avdevice
 
-  # Windows threading: use native Win32 threads, NOT pthreads (see FFmpeg configure ~L7225).
   --enable-w32threads
   --disable-pthreads
 
-  # Intel Quick Sync Video (oneVPL) — Intel iGPU hardware AVC decode only.
+  # Intel iGPU AVC hardware decode only.
   --enable-libvpl
   --disable-libmfx
   --enable-decoder=h264_qsv
   --disable-decoder=h264
 
-  # HTTPS streaming (Bilibili CDN).
-  # TLS: SChannel only — mutually exclusive with openssl/gnutls/mbedtls (schannel_conflict).
+  # HTTPS streaming; SChannel only (not compatible with openssl/gnutls).
   --enable-protocol=file,http,https,tcp,tls,pipe
+  --disable-protocol=udp,dtls
   --enable-schannel
   --disable-openssl
   --disable-gnutls
   --disable-libtls
   --disable-mbedtls
 
-  # dash demuxer requires libxml2 (dash_demuxer_deps in configure).
   --enable-libxml2
 
-  # Containers: fragmented MP4 direct URLs + optional MPD.
-  --enable-demuxer=dash,mov,mp4,aac,h264
+  # Bilibili: fMP4 (mov) + optional MPD (dash). No raw aac/h264 elementary streams.
+  --enable-demuxer=dash,mov
 
-  # Audio: software AAC (no QSV audio decoder for typical Bilibili streams).
-  --enable-decoder=aac,mp3
-  # hevc parser avoids link errors from shared H.264/HEVC SEI code paths in some FFmpeg versions.
-  --enable-parser=h264,hevc,aac,mpegaudio
+  # Audio: AAC only (Bilibili audio track).
+  --enable-decoder=aac
+  --enable-parser=h264,hevc,aac
 
-  # Required by h264_qsv (fMP4 bitstream conversion).
   --enable-bsf=h264_mp4toannexb,aac_adtstoasc,extract_extradata
 
-  # Minimal libavfilter set for playback pipelines / libmpv linkage.
-  --enable-filter=aresample,aformat,abuffer,abuffersink,buffer,buffersink,format,null,scale,setpts,fps,trim,copy
+  # mpv / playback pipeline minimum.
+  --enable-filter=aresample,aformat,abuffer,abuffersink,buffer,buffersink,format,null,scale
 
-  # CLI tools (no ffplay).
-  --enable-ffmpeg
-  --enable-ffprobe
-  --disable-ffplay
+  # DLL-only; no ffmpeg/ffprobe/ffplay.
+  --disable-programs
 )
 
 if [[ -n "$extra_cflags" ]]; then

@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# Flat runtime bundle: install prefix + MinGW DLL closure (never copy System32 DLLs).
+# Flat runtime bundle: FFmpeg libs + MinGW dependency closure (no System32 DLLs).
 set -euo pipefail
 
 root_dir="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
@@ -15,10 +15,20 @@ fi
 
 rm -rf "$flat_dir"
 mkdir -p "$flat_dir"
-cp -f "$bin_dir"/*.dll "$bin_dir"/*.exe "$flat_dir"/ 2>/dev/null || true
+
+shopt -s nullglob
+for pattern in \
+  "$bin_dir"/avcodec-*.dll \
+  "$bin_dir"/avformat-*.dll \
+  "$bin_dir"/avutil-*.dll \
+  "$bin_dir"/avfilter-*.dll \
+  "$bin_dir"/swresample-*.dll \
+  "$bin_dir"/swscale-*.dll; do
+  cp -f "$pattern" "$flat_dir/"
+done
 
 declare -A queued=()
-queue=("$flat_dir/ffmpeg.exe")
+queue=()
 
 enqueue() {
   local f="$1"
@@ -29,6 +39,10 @@ enqueue() {
   queued[$key]=1
   queue+=("$f")
 }
+
+for seed in "$flat_dir"/*.dll; do
+  enqueue "$seed"
+done
 
 while ((${#queue[@]} > 0)); do
   current="${queue[0]}"
@@ -46,15 +60,11 @@ while ((${#queue[@]} > 0)); do
 done
 
 cat >"$dist_dir/README.txt" <<EOF
-FFmpeg Win x64 — Intel QSV (h264_qsv) + DASH/fMP4 minimal build
+FFmpeg Win x64 — Intel QSV (h264_qsv) + DASH/fMP4 (DLL only)
 Built from: $(git -C "$root_dir" rev-parse --short HEAD 2>/dev/null || echo unknown)
 
-Video: Intel iGPU hardware decode only (Quick Sync / libvpl). No H.264 software decoder.
-Audio: AAC software decode.
-
-Layout:
-  bin/          Self-contained runtime (copy this folder as a whole)
-  mingw64/      Dev prefix (include/, lib/pkgconfig/) for linking libmpv
+bin/          Runtime DLL bundle (mpv / embedding)
+mingw64/      Dev prefix (include/, lib/pkgconfig/)
 EOF
 
 echo "Packaged: $flat_dir ($(ls -1 "$flat_dir" | wc -l) files)"

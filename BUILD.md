@@ -25,11 +25,7 @@ CPU 基线：**x86-64-v2**（经 `clang-cl` wrapper 注入 `-march=x86-64-v2`；
 ```powershell
 vcpkg install libvpl:x64-windows libxml2:x64-windows-static pkgconf:x64-windows
 
-# VS DevShell 中
-$env:VCPKG_ROOT = 'C:\vcpkg'
-$env:PKG_CONFIG = "$env:VCPKG_ROOT\installed\x64-windows\tools\pkgconf\pkgconf.exe"
-$env:PKG_CONFIG_PATH = "$env:VCPKG_ROOT\installed\x64-windows\lib\pkgconfig;$env:VCPKG_ROOT\installed\x64-windows-static\lib\pkgconfig"
-$env:PATH = "C:\msys64\clang64\bin;C:\msys64\usr\bin;$env:PATH"
+# VS DevShell 中（脚本会自动设置 PKG_CONFIG / PKG_CONFIG_PATH）
 bash ./scripts/build-win-msvc.sh
 ```
 

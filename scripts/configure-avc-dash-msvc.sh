@@ -47,7 +47,6 @@ conf=(
   --disable-mbedtls
 
   --enable-libxml2
-  --pkg-config-flags=--static
   --enable-demuxer=dash,mov,mp4,aac,h264
   --enable-decoder=aac
   --enable-parser=h264,hevc,aac
@@ -63,6 +62,9 @@ if [[ -n "${CC:-}" ]]; then
 fi
 if [[ -n "${CXX:-}" ]]; then
   conf+=(--cxx="$CXX")
+fi
+if [[ -n "${PKG_CONFIG:-}" ]]; then
+  conf+=(--pkg-config="$PKG_CONFIG")
 fi
 
 "$root_dir/configure" "${conf[@]}"

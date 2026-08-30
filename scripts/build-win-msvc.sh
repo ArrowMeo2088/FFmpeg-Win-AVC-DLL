@@ -13,6 +13,34 @@ export FFMPEG_DIST_DIR="$dist_dir"
 export FFMPEG_PREFIX="$prefix"
 export PKG_CONFIG_MSVC_SYNTAX="${PKG_CONFIG_MSVC_SYNTAX:-1}"
 
+setup_vcpkg_env() {
+  local root="${VCPKG_ROOT:-C:/vcpkg}"
+  root="${root//\\//}"
+
+  export PKG_CONFIG="${root}/installed/x64-windows/tools/pkgconf/pkgconf.exe"
+  # Windows pkgconf uses ';' between entries. Do NOT use --static globally: libvpl is dynamic.
+  export PKG_CONFIG_PATH="${root}/installed/x64-windows/lib/pkgconfig;${root}/installed/x64-windows-static/lib/pkgconfig"
+
+  if [[ ! -f "$PKG_CONFIG" ]]; then
+    echo "error: vcpkg pkgconf not found: $PKG_CONFIG"
+    exit 1
+  fi
+
+  if ! "$PKG_CONFIG" --exists 'vpl >= 2.6'; then
+    echo "error: libvpl pkg-config check failed"
+    "$PKG_CONFIG" --print-errors 'vpl >= 2.6' || true
+    echo "PKG_CONFIG=$PKG_CONFIG"
+    echo "PKG_CONFIG_PATH=$PKG_CONFIG_PATH"
+    exit 1
+  fi
+
+  if ! "$PKG_CONFIG" --exists libxml-2.0; then
+    echo "error: libxml2 pkg-config check failed"
+    "$PKG_CONFIG" --print-errors libxml-2.0 || true
+    exit 1
+  fi
+}
+
 ensure_tool() {
   local tool="$1"
   command -v "$tool" >/dev/null 2>&1 && return 0
@@ -31,20 +59,10 @@ ensure_tool() {
   exit 1
 }
 
+setup_vcpkg_env
 ensure_tool clang-cl
 ensure_tool nasm
 ensure_tool make
-
-if [[ -n "${PKG_CONFIG:-}" ]]; then
-  :
-elif command -v pkg-config >/dev/null 2>&1; then
-  export PKG_CONFIG=pkg-config
-elif command -v pkgconf >/dev/null 2>&1; then
-  export PKG_CONFIG=pkgconf
-else
-  echo "error: pkg-config/pkgconf not found (set PKG_CONFIG)"
-  exit 1
-fi
 
 # MSYS link.exe shadows MSVC link.exe when both are on PATH.
 if [[ -f /usr/bin/link.exe && ! -f /usr/bin/link.exe.bak ]]; then

@@ -24,9 +24,6 @@ env:
 jobs:
   build:
     runs-on: windows-2025
-    defaults:
-      run:
-        shell: msys2 {0}
 
     steps:
       - name: Disable autocrlf
@@ -49,15 +46,18 @@ jobs:
 
       - name: Install vcpkg dependencies
         shell: pwsh
-        env:
-          VCPKG_ROOT: C:\vcpkg
         run: |
           & "$env:VCPKG_ROOT\vcpkg.exe" install `
             libvpl:x64-windows `
             libxml2:x64-windows-static `
             pkgconf:x64-windows
 
+      - name: Export MSVC environment
+        shell: pwsh
+        run: ./scripts/ci-export-vcvars.ps1
+
       - name: Configure, build, package
+        shell: msys2 {0}
         run: bash ./scripts/ci-build.sh
 
       - name: Upload artifact

@@ -68,16 +68,15 @@ setup_vcpkg_env() {
 
 setup_vcpkg_env
 
-# 4) x86-64-v2 via compiler wrapper (FFmpeg MSVC filter drops -march=*)
+# 4) x86-64-v2 via .bat wrapper (MSVC configure cannot use bash script as CC)
 wrapper_dir="$build_dir/wrappers"
 mkdir -p "$wrapper_dir"
-cat >"$wrapper_dir/clang-cl-v2" <<EOF
-#!/usr/bin/env bash
-exec "$CLANG_CL" -march=x86-64-v2 "\$@"
+cat >"$wrapper_dir/clang-cl-v2.bat" <<EOF
+@echo off
+"$CLANG_CL" -march=x86-64-v2 %*
 EOF
-chmod +x "$wrapper_dir/clang-cl-v2"
-export CC="$wrapper_dir/clang-cl-v2"
-export CXX="$wrapper_dir/clang-cl-v2"
+export CC="$wrapper_dir/clang-cl-v2.bat"
+export CXX="$wrapper_dir/clang-cl-v2.bat"
 
 # 5) configure → build → install → package
 bash "$root_dir/scripts/configure-avc-dash-msvc.sh"

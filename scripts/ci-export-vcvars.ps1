@@ -10,8 +10,18 @@ if (-not $vsPath) { throw 'Visual Studio not found' }
 Import-Module "$vsPath\Common7\Tools\Microsoft.VisualStudio.DevShell.dll"
 Enter-VsDevShell -VsInstallPath $vsPath -SkipAutomaticLocation -DevCmdArguments '-arch=amd64 -host_arch=amd64'
 
-$clangCl = (Get-Command clang-cl -ErrorAction Stop).Source.Replace('\', '/')
-if (-not (Test-Path $clangCl)) { throw "clang-cl not found: $clangCl" }
+# mpv CI: drop standalone LLVM/CMake/Strawberry from PATH so we use VS toolchain.
+$env:PATH = ($env:PATH -split ';' | Where-Object {
+  $_ -and $_ -notin @(
+    'C:\Program Files\LLVM\bin',
+    'C:\Program Files\CMake\bin',
+    'C:\Strawberry\c\bin'
+  )
+}) -join ';'
+
+$clangCl = Join-Path $vsPath 'VC\Tools\Llvm\x64\bin\clang-cl.exe'
+if (-not (Test-Path $clangCl)) { throw "VS clang-cl not found: $clangCl" }
+$clangCl = $clangCl.Replace('\', '/')
 
 $envFile = Join-Path $env:GITHUB_WORKSPACE 'build\msvc-env.sh'
 New-Item -Force -ItemType Directory (Split-Path $envFile) | Out-Null

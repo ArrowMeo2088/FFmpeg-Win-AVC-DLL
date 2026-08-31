@@ -30,11 +30,24 @@ if [[ -f /usr/bin/link.exe && ! -f /usr/bin/link.exe.bak ]]; then
   /usr/bin/mv -f /usr/bin/link.exe /usr/bin/link.exe.bak
 fi
 
+if [[ -z "${CLANG_CL:-}" || ! -f "$CLANG_CL" ]]; then
+  echo "error: CLANG_CL not set or missing; run ci-export-vcvars.ps1 first" >&2
+  echo "CLANG_CL=${CLANG_CL:-}" >&2
+  exit 1
+fi
+if [[ ! -x /usr/bin/make ]]; then
+  echo "error: /usr/bin/make not found" >&2
+  exit 1
+fi
+if [[ ! -x /usr/bin/nasm ]]; then
+  echo "error: /usr/bin/nasm not found" >&2
+  exit 1
+fi
+
 setup_vcpkg_env() {
   local root='C:/vcpkg'
   export VCPKG_ROOT="$root"
   export PKG_CONFIG="${root}/installed/x64-windows/tools/pkgconf/pkgconf.exe"
-  # libvpl = dynamic (x64-windows); libxml2 = static (x64-windows-static). No global --static.
   export PKG_CONFIG_PATH="${root}/installed/x64-windows/lib/pkgconfig;${root}/installed/x64-windows-static/lib/pkgconfig"
 
   if [[ ! -f "$PKG_CONFIG" ]]; then
@@ -53,31 +66,14 @@ setup_vcpkg_env() {
   fi
 }
 
-ensure_tool() {
-  local tool="$1"
-  command -v "$tool" >/dev/null 2>&1 && return 0
-  local dir
-  for dir in /usr/bin /clang64/bin "/c/Program Files/NASM"; do
-    if [[ -x "$dir/$tool" || -x "$dir/$tool.exe" ]]; then
-      export PATH="$dir:$PATH"
-      command -v "$tool" >/dev/null 2>&1 && return 0
-    fi
-  done
-  echo "error: required tool not in PATH: $tool" >&2
-  exit 1
-}
-
 setup_vcpkg_env
-ensure_tool clang-cl
-ensure_tool nasm
-ensure_tool make
 
-# 4) x86-64-v2: FFmpeg MSVC filter drops -march=*, inject via compiler wrapper
+# 4) x86-64-v2 via compiler wrapper (FFmpeg MSVC filter drops -march=*)
 wrapper_dir="$build_dir/wrappers"
 mkdir -p "$wrapper_dir"
-cat >"$wrapper_dir/clang-cl-v2" <<'EOF'
+cat >"$wrapper_dir/clang-cl-v2" <<EOF
 #!/usr/bin/env bash
-exec clang-cl -march=x86-64-v2 "$@"
+exec "$CLANG_CL" -march=x86-64-v2 "\$@"
 EOF
 chmod +x "$wrapper_dir/clang-cl-v2"
 export CC="$wrapper_dir/clang-cl-v2"

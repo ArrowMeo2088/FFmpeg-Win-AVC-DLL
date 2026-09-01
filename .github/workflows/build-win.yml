@@ -31,9 +31,9 @@ jobs:
         uses: actions/cache@v4
         with:
           path: build/win-x64-static
-          key: ffmpeg-avc-static-${{ hashFiles('scripts/configure-avc-dash-mingw-static.sh') }}
+          key: ffmpeg-avc-static-v5-${{ hashFiles('scripts/configure-avc-dash-mingw-static.sh', 'scripts/package-win-mingw-static.sh') }}
           restore-keys: |
-            ffmpeg-avc-static-
+            ffmpeg-avc-static-v5-
 
       - name: Setup MSYS2 MINGW64
         uses: msys2/setup-msys2@v2

@@ -20,7 +20,9 @@ Windows x64 最小 FFmpeg：`h264_qsv`（Intel 核显）+ B 站 fMP4/DASH 流式
 |------|------|
 | FFmpeg → libmpv | **静态** `.a`（链进 libmpv-2.dll） |
 | libvpl | **动态** `libvpl-2.dll`（`h264_qsv` 运行时） |
-| libxml2 | **静态**（随 libavformat DASH 链入 libmpv；meson 须显式 `dependency('libxml-2.0', static: true)`） |
+| libxml2 | **静态**（`-DLIBXML_STATIC` 编译；`dashdec.o` 引用 `xmlFree` 而非 `__imp_xmlFree`） |
+
+MinGW 静态构建必须在 configure 时加 `-DLIBXML_STATIC`，否则 `libavformat.a` 内 DASH 代码按 DLL 导入 ABI 编译，与静态 `libxml2.a` 不兼容。`package-win-mingw-static.sh` 会用 `nm` 校验 ` U xmlFree` 且无 `__imp_xml*`。
 
 `package-win-mingw-static.sh` 会从 prefix 的 `.pc` 中剥离 `-lvpl`，避免 `pkg-config --static` 误链 `libvpl.a`（C++ 静态库）。mpv 侧须用 `cc.find_library('vpl', static: false)` 动态链接。
 

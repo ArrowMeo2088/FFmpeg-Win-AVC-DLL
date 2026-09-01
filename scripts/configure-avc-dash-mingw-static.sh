@@ -22,7 +22,7 @@ conf=(
   --disable-doc
   --enable-small
   --enable-version3
-  --extra-cflags=-march=x86-64-v2
+  --extra-cflags="-march=x86-64-v2 -DLIBXML_STATIC"
 
   --disable-everything
   --enable-avcodec

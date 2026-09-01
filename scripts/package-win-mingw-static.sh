@@ -76,3 +76,18 @@ PKG_CONFIG_PATH="$prefix/lib/pkgconfig" PKG_CONFIG="pkg-config --static" \
 PKG_CONFIG_PATH="$prefix/lib/pkgconfig" PKG_CONFIG="pkg-config --static" \
   pkg-config --libs libavcodec | grep -qv -- '-lvpl'
 echo "Static link preflight OK (libxml2 present, -lvpl stripped from .pc)"
+
+avformat_a="$prefix/lib/libavformat.a"
+if [[ ! -f "$avformat_a" ]]; then
+  echo "error: missing $avformat_a" >&2
+  exit 1
+fi
+if ! nm "$avformat_a" 2>/dev/null | grep -q ' U xmlFree'; then
+  echo "error: libavformat.a missing undefined xmlFree (expected LIBXML_STATIC ABI)" >&2
+  exit 1
+fi
+if nm "$avformat_a" 2>/dev/null | grep -q '__imp_xml'; then
+  echo "error: libavformat.a still references __imp_xml* (rebuild with -DLIBXML_STATIC)" >&2
+  exit 1
+fi
+echo "libavformat.a libxml2 ABI OK (xmlFree, no __imp_xml*)"

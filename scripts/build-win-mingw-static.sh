@@ -16,8 +16,26 @@ mkdir -p "$(dirname "$prefix")"
 prefix="$(cd "$(dirname "$prefix")" && pwd)/$(basename "$prefix")"
 export FFMPEG_PREFIX="$prefix"
 
-if [[ ! -f "$build_dir/config.h" ]]; then
-  bash "$root_dir/scripts/configure-avc-dash-mingw-static.sh"
+configure_script="$root_dir/scripts/configure-avc-dash-mingw-static.sh"
+configure_stamp="$build_dir/.configure-avc-dash-mingw-static.stamp"
+need_configure=0
+
+if [[ "${FFMPEG_FORCE_RECONFIGURE:-0}" == "1" ]]; then
+  need_configure=1
+elif [[ ! -f "$build_dir/config.h" ]]; then
+  need_configure=1
+elif [[ ! -f "$configure_stamp" ]] || ! cmp -s "$configure_script" "$configure_stamp"; then
+  need_configure=1
+elif ! grep -q 'LIBXML_STATIC' "$build_dir/config.h" 2>/dev/null; then
+  need_configure=1
+fi
+
+if [[ "$need_configure" == "1" ]]; then
+  echo "=== Configure FFmpeg (LIBXML_STATIC static libxml2 ABI) ==="
+  rm -rf "$build_dir"
+  mkdir -p "$build_dir"
+  bash "$configure_script"
+  cp -f "$configure_script" "$configure_stamp"
 else
   echo "=== Reusing existing configure in $build_dir ==="
 fi

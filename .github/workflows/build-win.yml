@@ -1,73 +1,79 @@
-name: Build Windows x64 MSVC (AVC + DASH, static for mpv)
+name: Build Windows x64 (MSYS2 AVC static)
 
 on:
   push:
     branches: [master, main]
-    paths-ignore:
-      - 'doc/**'
-      - 'tests/**'
-      - '.forgejo/**'
-      - 'CREDITS'
-      - 'MAINTAINERS'
-      - 'Changelog'
-  pull_request:
-    branches: [master, main]
+    paths:
+      - '.github/workflows/build-win.yml'
+      - 'scripts/**'
+      - 'BUILD.md'
+      - 'configure'
+      - 'libavcodec/**'
+      - 'libavformat/**'
+      - 'libavutil/**'
+      - 'libavfilter/**'
+      - 'libswresample/**'
+      - 'libswscale/**'
   workflow_dispatch:
 
 concurrency:
-  group: build-win-msvc-${{ github.ref }}
+  group: ffmpeg-win-msys2-static-${{ github.ref }}
   cancel-in-progress: true
 
-env:
-  VCPKG_ROOT: C:\vcpkg
-
 jobs:
-  build:
-    runs-on: windows-2025
+  mingw64_static:
+    runs-on: windows-latest
 
     steps:
-      - name: Disable autocrlf
-        shell: pwsh
-        run: |
-          git config --global core.autocrlf false
-          git config --global core.eol lf
-
       - uses: actions/checkout@v4
 
-      - name: Setup MSYS2 (make, nasm)
+      - name: Cache FFmpeg build tree
+        uses: actions/cache@v4
+        with:
+          path: build/win-x64-static
+          key: ffmpeg-avc-static-${{ hashFiles('scripts/configure-avc-dash-mingw-static.sh') }}
+          restore-keys: |
+            ffmpeg-avc-static-
+
+      - name: Setup MSYS2 MINGW64
         uses: msys2/setup-msys2@v2
         with:
-          msystem: CLANG64
+          msystem: MINGW64
           update: true
+          cache: true
           install: >-
+            mingw-w64-x86_64-toolchain
+            mingw-w64-x86_64-nasm
+            mingw-w64-x86_64-pkgconf
+            mingw-w64-x86_64-libvpl
+            mingw-w64-x86_64-libxml2
             make
             diffutils
-            nasm
 
-      - name: Install vcpkg dependencies
-        shell: pwsh
-        env:
-          VCPKG_ROOT: C:\vcpkg
-        run: |
-          & "$env:VCPKG_ROOT\vcpkg.exe" install `
-            libvpl:x64-windows `
-            libxml2:x64-windows-static `
-            pkgconf:x64-windows
-
-      - name: Export MSVC environment
-        shell: pwsh
-        run: ./scripts/ci-export-vcvars.ps1
-
-      - name: Configure, build, package
+      - name: Build static FFmpeg (AVC + DASH)
         shell: msys2 {0}
-        env:
-          VCPKG_ROOT: C:\vcpkg
-        run: bash ./scripts/build-win-msvc.sh
+        run: bash ./scripts/build-win-mingw-static.sh
+
+      - name: Print config.log on failure
+        if: failure()
+        shell: msys2 {0}
+        run: |
+          if [[ -f build/win-x64-static/ffbuild/config.log ]]; then
+            tail -n 200 build/win-x64-static/ffbuild/config.log
+          fi
+
+      - name: Verify artifact layout
+        shell: msys2 {0}
+        run: |
+          test -d dist/ffmpeg-win-x64-static/prefix/lib
+          ls dist/ffmpeg-win-x64-static/prefix/lib/*.a
+          test -f dist/ffmpeg-win-x64-static/bin/libvpl-2.dll
+          test -f dist/ffmpeg-win-x64-static/MANIFEST.txt
 
       - name: Upload artifact
         uses: actions/upload-artifact@v4
         with:
-          name: ffmpeg-win-msvc-x64-avc-dash-${{ github.run_number }}
-          path: dist/ffmpeg-win-msvc-x64/
+          name: ffmpeg-win-x64-static-${{ github.run_number }}
+          path: dist/ffmpeg-win-x64-static/
           retention-days: 30
           if-no-files-found: error

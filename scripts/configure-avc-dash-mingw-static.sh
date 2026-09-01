@@ -1,10 +1,11 @@
 #!/usr/bin/env bash
-# DEPRECATED: shared DLL debug build. Use build-win-mingw-static.sh for mpv.
+# MinGW static libs for mpv (libvpl stays a runtime DLL).
+# Feature set matches validated MinGW build #8 / MSVC static baseline.
 set -euo pipefail
 
 root_dir="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
-build_dir="${FFMPEG_BUILD_DIR:-$root_dir/build/win-x64}"
-prefix="${FFMPEG_PREFIX:-/mingw64}"
+build_dir="${FFMPEG_BUILD_DIR:-$root_dir/build/win-x64-static}"
+prefix="${FFMPEG_PREFIX:-$root_dir/dist/ffmpeg-win-x64-static/prefix}"
 
 mkdir -p "$build_dir"
 cd "$build_dir"
@@ -13,12 +14,13 @@ conf=(
   --prefix="$prefix"
   --arch=x86_64
   --target-os=mingw32
-  --enable-shared
-  --disable-static
+  --enable-static
+  --disable-shared
   --disable-debug
   --disable-doc
   --enable-small
   --enable-version3
+  --extra-cflags=-march=x86-64-v2
 
   --disable-everything
   --enable-avcodec
@@ -48,7 +50,7 @@ conf=(
   --enable-libxml2
   --enable-demuxer=dash,mov,mp4,aac,h264
   --enable-decoder=aac
-  --enable-parser=h264,hevc,aac
+  --enable-parser=h264,aac
 
   --enable-bsf=h264_mp4toannexb,aac_adtstoasc,extract_extradata
   --enable-filter=aresample,aformat,abuffer,abuffersink,buffer,buffersink,format,null,scale,setpts,fps,trim,copy

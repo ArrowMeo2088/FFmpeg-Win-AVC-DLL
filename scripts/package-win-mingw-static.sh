@@ -56,3 +56,11 @@ EOF
 
 echo "Packaged prefix: $prefix"
 echo "Runtime DLLs: $bin_dir ($(ls -1 "$bin_dir" 2>/dev/null | wc -l) files)"
+
+pc="$prefix/lib/pkgconfig/libavcodec.pc"
+if [[ ! -f "$pc" ]]; then
+  echo "error: missing $pc" >&2
+  exit 1
+fi
+grep '^prefix=' "$pc"
+PKG_CONFIG_PATH="$prefix/lib/pkgconfig" pkg-config --modversion libavcodec

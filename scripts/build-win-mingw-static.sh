@@ -12,6 +12,10 @@ export FFMPEG_BUILD_DIR="$build_dir"
 export FFMPEG_DIST_DIR="$dist_dir"
 export FFMPEG_PREFIX="$prefix"
 
+mkdir -p "$(dirname "$prefix")"
+prefix="$(cd "$(dirname "$prefix")" && pwd)/$(basename "$prefix")"
+export FFMPEG_PREFIX="$prefix"
+
 if [[ ! -f "$build_dir/config.h" ]]; then
   bash "$root_dir/scripts/configure-avc-dash-mingw-static.sh"
 else

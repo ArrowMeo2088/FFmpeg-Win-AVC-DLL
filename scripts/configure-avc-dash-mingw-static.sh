@@ -7,7 +7,9 @@ root_dir="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 build_dir="${FFMPEG_BUILD_DIR:-$root_dir/build/win-x64-static}"
 prefix="${FFMPEG_PREFIX:-$root_dir/dist/ffmpeg-win-x64-static/prefix}"
 
-mkdir -p "$build_dir"
+mkdir -p "$(dirname "$prefix")" "$build_dir"
+prefix="$(cd "$(dirname "$prefix")" && pwd)/$(basename "$prefix")"
+export FFMPEG_PREFIX="$prefix"
 cd "$build_dir"
 
 conf=(

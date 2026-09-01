@@ -64,3 +64,15 @@ if [[ ! -f "$pc" ]]; then
 fi
 grep '^prefix=' "$pc"
 PKG_CONFIG_PATH="$prefix/lib/pkgconfig" pkg-config --modversion libavcodec
+
+# Consumer links libvpl dynamically (libvpl-2.dll); strip from static .pc closure.
+for pc in "$prefix/lib/pkgconfig"/*.pc; do
+  sed -i 's/-lvpl//g; s/  / /g; s/ $//' "$pc"
+done
+
+# Preflight: DASH needs xml2 in static closure; vpl must NOT be static-linked.
+PKG_CONFIG_PATH="$prefix/lib/pkgconfig" PKG_CONFIG="pkg-config --static" \
+  pkg-config --libs libavformat | grep -q -- '-lxml2'
+PKG_CONFIG_PATH="$prefix/lib/pkgconfig" PKG_CONFIG="pkg-config --static" \
+  pkg-config --libs libavcodec | grep -qv -- '-lvpl'
+echo "Static link preflight OK (libxml2 present, -lvpl stripped from .pc)"

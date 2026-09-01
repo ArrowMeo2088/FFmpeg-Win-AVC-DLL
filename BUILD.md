@@ -19,7 +19,10 @@ Windows x64 最小 FFmpeg：`h264_qsv`（Intel 核显）+ B 站 fMP4/DASH 流式
 | 组件 | 方式 |
 |------|------|
 | FFmpeg → libmpv | **静态** `.a`（链进 libmpv-2.dll） |
-| libvpl | **动态** `libvpl-2.dll`（`h264_qsv` 运行时 dlopen） |
+| libvpl | **动态** `libvpl-2.dll`（`h264_qsv` 运行时） |
+| libxml2 | **静态**（随 libavformat DASH 链入 libmpv；meson 须显式 `dependency('libxml-2.0', static: true)`） |
+
+`package-win-mingw-static.sh` 会从 prefix 的 `.pc` 中剥离 `-lvpl`，避免 `pkg-config --static` 误链 `libvpl.a`（C++ 静态库）。mpv 侧须用 `cc.find_library('vpl', static: false)` 动态链接。
 
 CPU 基线：**x86-64-v2**（`-march=x86-64-v2`）。
 
